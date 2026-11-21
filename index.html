@@ -112,7 +112,6 @@ h1,h2{font-weight:900;font-size:clamp(44px,min(5.6vw,11.5vh),98px);line-height:.
 .ph{display:block;aspect-ratio:400/869;border-radius:14%/6.5%;padding:3%;background:#0b0b0d;box-shadow:0 40px 80px -30px rgba(0,0,0,.55)}
 .ph img{display:block;width:100%;height:100%;object-fit:cover;border-radius:12%/5.6%}
 .fc-v{position:absolute;left:21%;right:21%;top:43%;display:block}
-.fog{position:absolute;inset:0;background:var(--paper);opacity:0;pointer-events:none;will-change:opacity}
 .photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .fc-ph::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 55%,rgba(0,0,0,.7))}
 .fc-bot{position:absolute;left:8%;right:8%;bottom:6%;z-index:2;color:#fff;display:block;text-align:center}
@@ -139,6 +138,7 @@ h1,h2{font-weight:900;font-size:clamp(44px,min(5.6vw,11.5vh),98px);line-height:.
  .menu li{flex:1}
  .menu .m0{display:block}
  .menu a{display:flex;align-items:center;justify-content:center;height:58px;padding:0 2px;border-radius:0;font-size:13px;text-align:center}
+ .menu a{-webkit-tap-highlight-color:transparent;transition:none}
  .menu a:hover{background:none}
  .menu a[aria-current]{background:none;box-shadow:inset 0 3px 0 var(--k,#111)}
  .menu .lg{display:none}
@@ -159,8 +159,9 @@ h1,h2{font-weight:900;font-size:clamp(44px,min(5.6vw,11.5vh),98px);line-height:.
  .btn.o{background:none;color:var(--ink)}
  .nx{display:none}
  .foot{margin-top:10px}
- /* Avec le script : le texte ne défile plus, il reste sous la scène et se fond d'une section à l'autre. Les sections ne servent plus que de crans de défilement. */
- .fx main>section{padding:0}
+ /* Avec le script : la page ne défile plus. Un balayage change de section, et la transition est jouée par le processeur graphique. */
+ .fx,.fx body{height:100%;overflow:hidden;overscroll-behavior:none}
+ .fx main>section{min-height:0;height:0;padding:0}
  .fx .in{position:fixed;left:20px;right:20px;top:calc(var(--st) + 14px);opacity:0;pointer-events:none;will-change:opacity,transform}
  .fx .cur .in{pointer-events:auto}
 }
@@ -250,7 +251,6 @@ h1,h2{font-weight:900;font-size:clamp(44px,min(5.6vw,11.5vh),98px);line-height:.
    <a class="fc-f" href="https://tremplinapp.ch" rel="noopener" tabindex="-1" data-name="Tremplin" data-open="Ouvrir tremplinapp.ch">
     <span class="fc-top"><img class="ic" src="img/tremplin-icon.svg" width="64" height="64" alt=""><b style="font-family:Nunito,sans-serif;font-weight:900">Tremplin</b><small>En test sur iOS et Android</small></span>
     <span class="fc-v"><span class="ph"><img src="img/tremplin.webp" width="400" height="869" alt="" decoding="async" draggable="false"></span></span>
-    <span class="fog"></span>
    </a>
   </div>
 
@@ -258,7 +258,6 @@ h1,h2{font-weight:900;font-size:clamp(44px,min(5.6vw,11.5vh),98px);line-height:.
    <a class="fc-f" href="https://grainedeculture.ch" rel="noopener" tabindex="-1" data-name="Graine de Culture" data-open="Ouvrir grainedeculture.ch">
     <span class="fc-top"><span class="ic tile"><img src="img/graine-emblem.svg" width="50" height="50" alt=""></span><b style="font-family:Newsreader,serif;font-weight:400">Graine de Culture</b><small>iOS et Android</small></span>
     <span class="fc-v"><span class="ph"><img src="img/graine.webp" width="400" height="869" alt="" decoding="async" draggable="false"></span></span>
-    <span class="fog"></span>
    </a>
   </div>
 
@@ -266,7 +265,6 @@ h1,h2{font-weight:900;font-size:clamp(44px,min(5.6vw,11.5vh),98px);line-height:.
    <a class="fc-f" href="https://basculeapp.com" rel="noopener" tabindex="-1" data-name="Bascule" data-open="Ouvrir basculeapp.com">
     <span class="fc-top"><img class="ic" src="img/bascule-icon.svg" width="64" height="64" alt=""><b style="font-family:Archivo,sans-serif;font-weight:800">Bascule</b><small>Bientôt sur iOS</small></span>
     <span class="mini"><small>Dilemme du jour</small><b>La montre du <span class="nb">grand-père</span></b><span>Tu lui offres la montre sans lui dire ce qu'elle fait</span><span>Tu respectes son refus et tu cherches autre chose</span></span>
-    <span class="fog"></span>
    </a>
   </div>
 
@@ -274,7 +272,6 @@ h1,h2{font-weight:900;font-size:clamp(44px,min(5.6vw,11.5vh),98px);line-height:.
    <a class="fc-f fc-ph" href="mailto:contact@arnaudclavien.ch" tabindex="-1" data-name="Contact" data-open="Écrire à contact@arnaudclavien.ch">
     <img class="photo" src="img/arnaud-rue.webp" width="480" height="672" alt="" decoding="async" draggable="false">
     <span class="fc-bot"><b>Contact</b></span>
-    <span class="fog"></span>
    </a>
   </div>
  </div>
@@ -284,76 +281,100 @@ h1,h2{font-weight:900;font-size:clamp(44px,min(5.6vw,11.5vh),98px);line-height:.
 (() => {
   const d = document, root = d.documentElement, stage = d.getElementById('stage');
   const secs = [...d.querySelectorAll('main>section')], N = secs.length;
-  const cards = [...d.querySelectorAll('.fc')], fronts = cards.map(c => c.querySelector('.fc-f')), fogs = cards.map(c => c.querySelector('.fog'));
+  const cards = [...d.querySelectorAll('.fc')], fronts = cards.map(c => c.querySelector('.fc-f'));
   const navs = [...d.querySelectorAll('[data-nav]')], ins = secs.map(e => e.querySelector('.in'));
   const ctr = stage.querySelector('.c'), axis = stage.querySelector('.axis'), sun = stage.querySelector('.sun'), menu = d.querySelector('.menu');
   const narrow = matchMedia('(max-width:820px)'), still = matchMedia('(prefers-reduced-motion:reduce)');
   const clamp = i => Math.min(Math.max(i, 0), N - 1);
-  let ready = false, tops = [], R = 300, G = 300, far = 1.15, slope = 2.5, m = false, fx = false, side = 1, oy = 0, sx = 0, cur = -1, raf = 0, goal = 0, goalT = 0, hT = 0, lw = 0, lh = 0;
-  const z = [], shown = [], last = {};
-  /* N'écrit un style que s'il change : rien n'est repeint pour rien pendant le défilement */
+  let ready = false, tops = [], R = 300, G = 300, far = 1.15, slope = 2.5, lim = 1.55, m = false, fx = false, side = 1, oy = 0, sx = 0;
+  let cur = -1, raf = 0, goal = 0, goalT = 0, hT = 0, lw = 0, lh = 0, P = 0, an = null;
+  const last = {};
+  /* N'écrit un style que s'il change : rien n'est repeint pour rien */
   const put = (e, k, prop, v) => { if (last[k] !== v) { last[k] = v; e.style[prop] = v; } };
 
-  /* Position continue dans le site : 0 = lui, 1 = Tremplin, ... calculée depuis le défilement natif */
+  /* Position continue dans le site : 0 = lui, 1 = Tremplin, ... calculée depuis le défilement natif (ordinateur) */
   const pos = () => { const y = scrollY; let i = 0; while (i < N - 2 && y >= tops[i + 1]) i++;
     return Math.min(Math.max(i + (y - tops[i]) / (tops[i + 1] - tops[i]), 0), N - 1); };
 
-  const draw = () => { raf = 0; const p = pos();
+  /* État de la scène pour une position p : [élément, transform, opacité, z-index, pointer-events]. Pur calcul, sans toucher à la page. */
+  const calc = p => { const S = [];
     /* Téléphone : il est grand et centré sur la première section, puis se range à droite. Le texte se fond sur place. */
     if (m) { const q = Math.min(p, 1), u = 1 - q * q * (3 - 2 * q), t = `translate3d(${(-sx * u).toFixed(1)}px,0,0)`;
-      put(ctr, 'c', 'transform', t); put(axis, 'a', 'transform', t); put(sun, 's', 'transform', `scale(${(1 + .25 * u).toFixed(3)})`); }
-    if (fx) for (let i = 0; i < N; i++) { const t = i - p, o = Math.min(1, Math.max(0, 1 - Math.abs(t) * 2));
-      put(ins[i], 'o' + i, 'opacity', o.toFixed(3)); if (o) put(ins[i], 't' + i, 'transform', `translate3d(0,${(t * 36).toFixed(1)}px,0)`); }
-    for (let j = 0; j < cards.length; j++) { const e = cards[j], dd = j + 1 - p, up = m && dd < 0, o = Math.min(1, Math.max(0, up ? 1 + (dd + .1) * 2.4 : 1 - (Math.abs(dd) - far) * slope));
-      /* Une carte hors champ reste une couche déjà dessinée (opacité quasi nulle) : la faire apparaître ne coûte ni décodage d'image ni peinture */
-      if (!o) { if (shown[j] !== 0) { e.style.opacity = '.001'; e.style.pointerEvents = 'none'; shown[j] = 0; } continue; }
-      if (shown[j] !== 1) { e.style.pointerEvents = 'auto'; shown[j] = 1; }
+      S.push([ctr, t], [axis, t], [sun, `scale(${(1 + .25 * u).toFixed(3)})`]); }
+    if (fx) for (let i = 0; i < N; i++) { const t = Math.min(.5, Math.max(-.5, i - p));
+      S.push([ins[i], `translate3d(0,${(t * 36).toFixed(1)}px,0)`, (1 - Math.abs(t) * 2).toFixed(3)]); }
+    for (let j = 0; j < cards.length; j++) {
+      /* Hors champ, la carte reste figée à la limite : une couche déjà dessinée, presque transparente, qui n'a plus qu'à réapparaître */
+      const dd = Math.min(Math.max(j + 1 - p, m ? -.52 : -lim), lim), up = m && dd < 0;
+      const o = Math.min(1, Math.max(0, up ? 1 + (dd + .1) * 2.4 : 1 - (Math.abs(dd) - far) * slope));
       /* Ordinateur : un quart de tour par section. Téléphone : la carte attend derrière son épaule, passe derrière lui et vient devant à gauche, sans jamais couvrir son visage ; celle qui part monte et s'efface. */
       const deg = m ? (up ? dd * 40 : Math.min(dd, 1) * 160 + Math.max(dd - 1, 0) * 30) + 55 : dd * 90 + 55;
       const a = deg * Math.PI / 180, cs = Math.cos(a), sn = Math.sin(a), k = (cs + 1) / 2;
-      e.style.transform = `translate3d(${(sn * R * side).toFixed(1)}px,${(dd * G * (up ? 1.6 : 1) + oy).toFixed(1)}px,0) rotateY(${(-sn * 22 * side).toFixed(2)}deg) scale(${(.55 + .55 * k).toFixed(3)})`;
-      e.style.opacity = o.toFixed(3);
-      put(fogs[j], 'f' + j, 'opacity', (Math.max(0, .787 - k) * .6).toFixed(2));
-      const zi = cs < 0 ? 10 : cs > .7 ? 70 : 60; if (zi !== z[j]) e.style.zIndex = z[j] = zi; }
-    const c = Math.round(p); if (c !== cur) change(c); };
+      /* Plus la carte est loin derrière, plus elle se fond dans le fond */
+      S.push([cards[j], `translate3d(${(sn * R * side).toFixed(1)}px,${(dd * G * (up ? 1.6 : 1) + oy).toFixed(1)}px,0) rotateY(${(-sn * 22 * side).toFixed(2)}deg) scale(${(.55 + .55 * k).toFixed(3)})`,
+        Math.max(.001, o * (1 - Math.max(0, .787 - k) * .6)).toFixed(3), cs < 0 ? 10 : cs > .7 ? 70 : 60, o ? 'auto' : 'none']); }
+    return S; };
+  const apply = (S, noZ) => S.forEach((s, n) => { put(s[0], n + 't', 'transform', s[1]); if (s[2] != null) put(s[0], n + 'o', 'opacity', s[2]);
+    if (s[3] != null && !noZ) put(s[0], n + 'z', 'zIndex', s[3]); if (s[4]) put(s[0], n + 'p', 'pointerEvents', s[4]); });
+
+  /* Ordinateur : la scène suit le défilement */
+  const draw = () => { raf = 0; if (fx) return; const p = pos(); apply(calc(p)); const c = Math.round(p); if (c !== cur) change(c); };
   const queue = () => { if (!raf) raf = requestAnimationFrame(draw); };
 
   const label = j => { const f = fronts[j], on = j === cur - 1;
     f.tabIndex = on ? 0 : -1; f.setAttribute('aria-label', on ? f.dataset.open : `Aller à ${f.dataset.name}`); };
 
-  const change = c => { cur = c;
+  /* L'adresse n'est mise à jour qu'une fois le mouvement terminé : la changer en plein geste fait accrocher l'animation sur iPhone */
+  const change = (c, wait = 350) => { cur = c;
     navs.forEach(a => +a.dataset.nav === c ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'));
     cards.forEach((e, j) => { e.classList.toggle('on', j === c - 1); label(j); });
     secs.forEach((e, i) => e.classList.toggle('cur', i === c));
-    /* L'adresse n'est mise à jour qu'une fois le défilement posé : sur iPhone, la changer en plein geste fait accrocher l'animation */
-    clearTimeout(hT); if (ready) hT = setTimeout(() => { try { history.replaceState(null, '', c ? '#' + secs[c].id : location.pathname + location.search); } catch (e) {} }, 350); };
+    clearTimeout(hT); if (ready) hT = setTimeout(() => { try { history.replaceState(null, '', c ? '#' + secs[c].id : location.pathname + location.search); } catch (e) {} }, wait); };
 
-  const go = i => { goal = clamp(i); goalT = performance.now(); scrollTo({ top: tops[goal], behavior: still.matches ? 'auto' : 'smooth' }); };
-  const step = k => go((performance.now() - goalT < 900 ? goal : cur) + k);
+  /* Téléphone : la page ne défile pas. Chaque changement de section est une animation de transform et d'opacité,
+     échantillonnée sur la même trajectoire et confiée au navigateur, qui la joue hors du fil du script : elle ne peut plus se bloquer en route. */
+  const ease = x => 1 - Math.pow(1 - x, 3);
+  const pNow = () => an ? an.p0 + (an.p1 - an.p0) * ease(Math.min(1, (performance.now() - an.t0) / an.T)) : P;
+  const halt = () => { if (!an) return; an.list.forEach(a => a.cancel()); an.timers.forEach(clearTimeout); an = null; };
+  const run = target => { const p0 = pNow(), dist = Math.abs(target - p0); halt(); P = target;
+    if (still.matches || dist < .001 || !ctr.animate) { apply(calc(P)); change(P); return; }
+    const T = 460 + 170 * Math.max(0, dist - 1), K = Math.max(8, Math.ceil(dist * 14)), fr = [], list = [], timers = [];
+    for (let k = 0; k <= K; k++) fr.push(calc(p0 + (target - p0) * ease(k / K)));
+    fr[0].forEach((s, n) => { const e = s[0], kf = fr.map(f => f[n][2] == null ? { transform: f[n][1] } : { transform: f[n][1], opacity: f[n][2] });
+      if (s[3] != null) { put(e, n + 'z', 'zIndex', s[3]);
+        for (let k = 1; k <= K; k++) if (fr[k][n][3] !== fr[k - 1][n][3]) timers.push(setTimeout(() => put(e, n + 'z', 'zIndex', fr[k][n][3]), T * k / K)); }
+      if (kf.some(x => x.transform !== kf[0].transform || x.opacity !== kf[0].opacity)) list.push(e.animate(kf, { duration: T, easing: 'linear', fill: 'both' })); });
+    apply(fr[K], true);
+    an = { p0, p1: target, t0: performance.now(), T, list, timers };
+    timers.push(setTimeout(() => { halt(); apply(calc(P)); }, T + 60));
+    change(target, T + 300); };
 
-  const dims = () => { const s = root.style; m = narrow.matches;
-    /* Téléphone : la scène prend toute la hauteur que le texte et la barre d'onglets laissent libre. Trop peu de place : retour au défilement simple. */
-    root.classList.toggle('fx', m); fx = m;
-    if (m) { const st = secs[0].offsetHeight - menu.offsetHeight - Math.max(...ins.map(e => e.offsetHeight)) - 26;
-      if (st < 170) { fx = false; root.classList.remove('fx'); } else s.setProperty('--st', st + 'px'); }
+  const go = i => { goal = clamp(i); goalT = performance.now(); if (fx) run(goal); else scrollTo({ top: tops[goal], behavior: still.matches ? 'auto' : 'smooth' }); };
+  const step = k => go((fx ? P : performance.now() - goalT < 900 ? goal : cur) + k);
+
+  const dims = () => { const s = root.style, was = fx, keep = was ? Math.round(P) : tops.length ? Math.round(pos()) : 0;
+    halt(); m = narrow.matches; fx = m; root.classList.toggle('fx', m);
+    /* Téléphone : la scène prend toute la hauteur que le texte et la barre d'onglets laissent libre. Trop peu de place : retour à la page qui défile. */
+    if (m) { const st = menu.getBoundingClientRect().top - Math.max(...ins.map(e => e.offsetHeight)) - 26;
+      if (st < 170) { fx = false; root.classList.remove('fx'); } else s.setProperty('--st', Math.round(st) + 'px'); }
     for (const k in last) delete last[k];
     if (!fx) { s.removeProperty('--st'); ins.forEach(e => e.style.opacity = e.style.transform = ''); }
     if (!m) ctr.style.transform = axis.style.transform = sun.style.transform = '';
-    lw = innerWidth; lh = secs[0].offsetHeight;
+    lw = innerWidth; lh = Math.round(menu.getBoundingClientRect().top);
     const w = stage.clientWidth, h = stage.clientHeight;
     const W = m ? Math.min(h * .46, w * .4, 300) : Math.min(300, h * .28);
-    R = m ? W * .95 : Math.min(w * .35, 420); G = m ? h * .22 : W * 1.3; far = m ? .9 : 1.15; slope = m ? 1.4 : 2.5; side = m ? -1 : 1; oy = m ? h * .05 : 0; sx = w * .12;
+    R = m ? W * .95 : Math.min(w * .35, 420); G = m ? h * .22 : W * 1.3; far = m ? .9 : 1.15; slope = m ? 1.4 : 2.5; lim = far + 1 / slope; side = m ? -1 : 1; oy = m ? h * .05 : 0; sx = w * .12;
     s.setProperty('--w', W.toFixed(1) + 'px'); s.setProperty('--s', (m ? Math.min(280, h * .52, w * .44) : Math.min(320, h * .3)).toFixed(1) + 'px');
-    tops = secs.map(e => e.offsetTop);
-    root.classList.toggle('free', secs.some(e => e.offsetHeight > innerHeight + 4));
-    draw(); };
+    if (fx) { root.classList.remove('free'); if (scrollY) scrollTo({ top: 0, behavior: 'instant' }); P = keep; apply(calc(P)); if (cur !== P) change(P); }
+    else { tops = secs.map(e => e.offsetTop); root.classList.toggle('free', secs.some(e => e.offsetHeight > innerHeight + 4));
+      if (was) scrollTo({ top: tops[keep], behavior: 'instant' }); draw(); } };
 
   addEventListener('scroll', queue, { passive: true });
-  /* Sur téléphone, la barre du navigateur qui se replie change la hauteur de la fenêtre mais pas la mise en page : ne rien recalculer */
-  addEventListener('resize', () => { if (fx && innerWidth === lw && secs[0].offsetHeight === lh) return; dims(); });
+  /* Sur téléphone, ne recalculer que si la largeur ou la place disponible change vraiment */
+  addEventListener('resize', () => { if (fx && innerWidth === lw && Math.round(menu.getBoundingClientRect().top) === lh) return; dims(); });
   d.fonts && d.fonts.ready.then(dims);
 
-  /* Liens internes : même défilement doux partout, sans recharger ni empiler l'historique */
+  /* Liens internes : même mouvement partout, sans recharger ni empiler l'historique */
   d.addEventListener('click', e => { const a = e.target.closest('a[href^="#"]'); if (!a) return;
     const i = secs.findIndex(s => '#' + s.id === a.getAttribute('href')); if (i < 0) return; e.preventDefault(); go(i); });
 
@@ -370,9 +391,18 @@ h1,h2{font-weight:900;font-size:clamp(44px,min(5.6vw,11.5vh),98px);line-height:.
     let m = k === 'ArrowDown' || k === 'PageDown' ? 1 : k === 'ArrowUp' || k === 'PageUp' ? -1 : k === ' ' && !press ? (e.shiftKey ? -1 : 1) : 0;
     if (k === 'Home') { e.preventDefault(); go(0); } else if (k === 'End') { e.preventDefault(); go(N - 1); } else if (m) { e.preventDefault(); step(m); } });
 
+  /* Tactile sur téléphone : un balayage vertical, une section, dès que le doigt a bougé de quelques millimètres.
+     Le zoom à deux doigts reste libre, et une page zoomée se déplace normalement. */
+  let tx = 0, ty = 0, done = true;
+  addEventListener('touchstart', e => { done = e.touches.length !== 1; if (!done) { tx = e.touches[0].clientX; ty = e.touches[0].clientY; } }, { passive: true });
+  addEventListener('touchmove', e => { if (!fx || e.touches.length !== 1 || (window.visualViewport && visualViewport.scale > 1.01)) return;
+    if (e.cancelable) e.preventDefault(); if (done) return;
+    const dx = e.touches[0].clientX - tx, dy = e.touches[0].clientY - ty;
+    if (Math.abs(dy) > 22 && Math.abs(dy) > Math.abs(dx)) { done = true; step(dy < 0 ? 1 : -1); } }, { passive: false });
+
   /* Molette et pavé tactile : un geste, une section.
      Laissée au navigateur, l'aimantation ramène en arrière après un cran de molette ; ici le geste avance toujours.
-     L'élan d'un pavé tactile (deltas qui décroissent) est ignoré jusqu'à un nouveau geste. Le tactile reste 100 % natif. */
+     L'élan d'un pavé tactile (deltas qui décroissent) est ignoré jusqu'à un nouveau geste. */
   let lastW = 0, acc = 0, busy = 0, tail = false, floor = 0;
   addEventListener('wheel', e => {
     if (e.ctrlKey || root.classList.contains('free') || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
@@ -388,7 +418,7 @@ h1,h2{font-weight:900;font-size:clamp(44px,min(5.6vw,11.5vh),98px);line-height:.
 
   dims();
   const start = secs.findIndex(e => '#' + e.id === location.hash);
-  if (start > 0) { scrollTo({ top: tops[start], behavior: 'instant' }); draw(); }
+  if (start > 0) { if (fx) { P = start; apply(calc(P)); change(P); } else { scrollTo({ top: tops[start], behavior: 'instant' }); draw(); } }
   ready = true;
 })();
 </script>
