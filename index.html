@@ -99,7 +99,7 @@ h1,h2{font-weight:900;font-size:clamp(44px,min(5.6vw,11.5vh),98px);line-height:.
 .c{position:absolute;left:50%;top:50%;width:0;height:0;perspective:1400px}
 .sun{position:absolute;width:var(--s);height:var(--s);left:calc(var(--s)/-2);top:calc(var(--s)/-2);border-radius:50%;z-index:50;box-shadow:0 30px 70px -25px rgba(0,0,0,.45);background:#d9d6cf}
 .sun img{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:50% 25%}
-.fc{position:absolute;width:var(--w);height:calc(var(--w)*1.4);left:calc(var(--w)/-2);top:calc(var(--w)*-.7);font-size:calc(var(--w)*.045);will-change:transform;visibility:hidden}
+.fc{position:absolute;width:var(--w);height:calc(var(--w)*1.4);left:calc(var(--w)/-2);top:calc(var(--w)*-.7);font-size:calc(var(--w)*.045);will-change:transform,opacity;opacity:0;pointer-events:none}
 .fc-f{position:absolute;inset:0;display:block;border-radius:7%/5%;overflow:hidden;background:var(--bg);color:var(--fg);text-decoration:none;box-shadow:0 30px 60px -30px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.1);transition:transform .3s}
 @media(hover:hover){.fc.on .fc-f:hover{transform:scale(1.03)}}
 .fc-f:focus-visible{outline-offset:5px}
@@ -112,7 +112,7 @@ h1,h2{font-weight:900;font-size:clamp(44px,min(5.6vw,11.5vh),98px);line-height:.
 .ph{display:block;aspect-ratio:400/869;border-radius:14%/6.5%;padding:3%;background:#0b0b0d;box-shadow:0 40px 80px -30px rgba(0,0,0,.55)}
 .ph img{display:block;width:100%;height:100%;object-fit:cover;border-radius:12%/5.6%}
 .fc-v{position:absolute;left:21%;right:21%;top:43%;display:block}
-.fog{position:absolute;inset:0;background:var(--paper);opacity:0;pointer-events:none}
+.fog{position:absolute;inset:0;background:var(--paper);opacity:0;pointer-events:none;will-change:opacity}
 .photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .fc-ph::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 55%,rgba(0,0,0,.7))}
 .fc-bot{position:absolute;left:8%;right:8%;bottom:6%;z-index:2;color:#fff;display:block;text-align:center}
@@ -135,7 +135,7 @@ h1,h2{font-weight:900;font-size:clamp(44px,min(5.6vw,11.5vh),98px);line-height:.
 @media(max-width:820px){
  :root{--col:100vw;--st:calc(var(--vh)*52);--bar:calc(58px + env(safe-area-inset-bottom,0px))}
  .brand{display:none}
- .menu{position:fixed;left:0;right:0;bottom:0;gap:0;padding:0 4px env(safe-area-inset-bottom,0px);border-radius:0;background:rgba(241,240,236,.94);box-shadow:inset 0 1px 0 rgba(0,0,0,.12)}
+ .menu{position:fixed;left:0;right:0;bottom:0;gap:0;padding:0 4px env(safe-area-inset-bottom,0px);border-radius:0;background:var(--paper);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:inset 0 1px 0 rgba(0,0,0,.12)}
  .menu li{flex:1}
  .menu .m0{display:block}
  .menu a{display:flex;align-items:center;justify-content:center;height:58px;padding:0 2px;border-radius:0;font-size:13px;text-align:center}
@@ -145,6 +145,7 @@ h1,h2{font-weight:900;font-size:clamp(44px,min(5.6vw,11.5vh),98px);line-height:.
  .stage{left:0;bottom:auto;height:var(--st);background:var(--paper)}
  .c,.axis{left:62%}
  .c{top:46%}
+ .sun{will-change:transform}
  main>section{padding:calc(var(--st) + 16px) 20px calc(var(--bar) + 14px)}
  .in{margin:0;max-width:none}
  .num{margin-bottom:12px;padding-bottom:8px}
@@ -288,8 +289,10 @@ h1,h2{font-weight:900;font-size:clamp(44px,min(5.6vw,11.5vh),98px);line-height:.
   const ctr = stage.querySelector('.c'), axis = stage.querySelector('.axis'), sun = stage.querySelector('.sun'), menu = d.querySelector('.menu');
   const narrow = matchMedia('(max-width:820px)'), still = matchMedia('(prefers-reduced-motion:reduce)');
   const clamp = i => Math.min(Math.max(i, 0), N - 1);
-  let ready = false, tops = [], R = 300, G = 300, far = 1.15, slope = 2.5, m = false, fx = false, side = 1, oy = 0, sx = 0, cur = -1, raf = 0, goal = 0, goalT = 0;
-  const z = [], shown = [];
+  let ready = false, tops = [], R = 300, G = 300, far = 1.15, slope = 2.5, m = false, fx = false, side = 1, oy = 0, sx = 0, cur = -1, raf = 0, goal = 0, goalT = 0, hT = 0, lw = 0, lh = 0;
+  const z = [], shown = [], last = {};
+  /* N'écrit un style que s'il change : rien n'est repeint pour rien pendant le défilement */
+  const put = (e, k, prop, v) => { if (last[k] !== v) { last[k] = v; e.style[prop] = v; } };
 
   /* Position continue dans le site : 0 = lui, 1 = Tremplin, ... calculée depuis le défilement natif */
   const pos = () => { const y = scrollY; let i = 0; while (i < N - 2 && y >= tops[i + 1]) i++;
@@ -298,19 +301,20 @@ h1,h2{font-weight:900;font-size:clamp(44px,min(5.6vw,11.5vh),98px);line-height:.
   const draw = () => { raf = 0; const p = pos();
     /* Téléphone : il est grand et centré sur la première section, puis se range à droite. Le texte se fond sur place. */
     if (m) { const q = Math.min(p, 1), u = 1 - q * q * (3 - 2 * q), t = `translate3d(${(-sx * u).toFixed(1)}px,0,0)`;
-      ctr.style.transform = axis.style.transform = t; sun.style.transform = `scale(${(1 + .25 * u).toFixed(3)})`; }
+      put(ctr, 'c', 'transform', t); put(axis, 'a', 'transform', t); put(sun, 's', 'transform', `scale(${(1 + .25 * u).toFixed(3)})`); }
     if (fx) for (let i = 0; i < N; i++) { const t = i - p, o = Math.min(1, Math.max(0, 1 - Math.abs(t) * 2));
-      ins[i].style.opacity = o.toFixed(3); ins[i].style.transform = o ? `translate3d(0,${(t * 36).toFixed(1)}px,0)` : ''; }
+      put(ins[i], 'o' + i, 'opacity', o.toFixed(3)); if (o) put(ins[i], 't' + i, 'transform', `translate3d(0,${(t * 36).toFixed(1)}px,0)`); }
     for (let j = 0; j < cards.length; j++) { const e = cards[j], dd = j + 1 - p, up = m && dd < 0, o = Math.min(1, Math.max(0, up ? 1 + (dd + .1) * 2.4 : 1 - (Math.abs(dd) - far) * slope));
-      if (!o) { if (shown[j] !== 0) { e.style.visibility = 'hidden'; shown[j] = 0; } continue; }
-      if (shown[j] !== 1) { e.style.visibility = 'visible'; shown[j] = 1; }
+      /* Une carte hors champ reste une couche déjà dessinée (opacité quasi nulle) : la faire apparaître ne coûte ni décodage d'image ni peinture */
+      if (!o) { if (shown[j] !== 0) { e.style.opacity = '.001'; e.style.pointerEvents = 'none'; shown[j] = 0; } continue; }
+      if (shown[j] !== 1) { e.style.pointerEvents = 'auto'; shown[j] = 1; }
       /* Ordinateur : un quart de tour par section. Téléphone : la carte attend derrière son épaule, passe derrière lui et vient devant à gauche, sans jamais couvrir son visage ; celle qui part monte et s'efface. */
       const deg = m ? (up ? dd * 40 : Math.min(dd, 1) * 160 + Math.max(dd - 1, 0) * 30) + 55 : dd * 90 + 55;
       const a = deg * Math.PI / 180, cs = Math.cos(a), sn = Math.sin(a), k = (cs + 1) / 2;
       e.style.transform = `translate3d(${(sn * R * side).toFixed(1)}px,${(dd * G * (up ? 1.6 : 1) + oy).toFixed(1)}px,0) rotateY(${(-sn * 22 * side).toFixed(2)}deg) scale(${(.55 + .55 * k).toFixed(3)})`;
       e.style.opacity = o.toFixed(3);
-      fogs[j].style.opacity = (Math.max(0, .787 - k) * .6).toFixed(3);
-      const zi = cs < 0 ? 10 : 60 + Math.round(cs * 20); if (zi !== z[j]) e.style.zIndex = z[j] = zi; }
+      put(fogs[j], 'f' + j, 'opacity', (Math.max(0, .787 - k) * .6).toFixed(2));
+      const zi = cs < 0 ? 10 : cs > .7 ? 70 : 60; if (zi !== z[j]) e.style.zIndex = z[j] = zi; }
     const c = Math.round(p); if (c !== cur) change(c); };
   const queue = () => { if (!raf) raf = requestAnimationFrame(draw); };
 
@@ -321,7 +325,8 @@ h1,h2{font-weight:900;font-size:clamp(44px,min(5.6vw,11.5vh),98px);line-height:.
     navs.forEach(a => +a.dataset.nav === c ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'));
     cards.forEach((e, j) => { e.classList.toggle('on', j === c - 1); label(j); });
     secs.forEach((e, i) => e.classList.toggle('cur', i === c));
-    if (ready) try { history.replaceState(null, '', c ? '#' + secs[c].id : location.pathname + location.search); } catch (e) {} };
+    /* L'adresse n'est mise à jour qu'une fois le défilement posé : sur iPhone, la changer en plein geste fait accrocher l'animation */
+    clearTimeout(hT); if (ready) hT = setTimeout(() => { try { history.replaceState(null, '', c ? '#' + secs[c].id : location.pathname + location.search); } catch (e) {} }, 350); };
 
   const go = i => { goal = clamp(i); goalT = performance.now(); scrollTo({ top: tops[goal], behavior: still.matches ? 'auto' : 'smooth' }); };
   const step = k => go((performance.now() - goalT < 900 ? goal : cur) + k);
@@ -331,8 +336,10 @@ h1,h2{font-weight:900;font-size:clamp(44px,min(5.6vw,11.5vh),98px);line-height:.
     root.classList.toggle('fx', m); fx = m;
     if (m) { const st = secs[0].offsetHeight - menu.offsetHeight - Math.max(...ins.map(e => e.offsetHeight)) - 26;
       if (st < 170) { fx = false; root.classList.remove('fx'); } else s.setProperty('--st', st + 'px'); }
+    for (const k in last) delete last[k];
     if (!fx) { s.removeProperty('--st'); ins.forEach(e => e.style.opacity = e.style.transform = ''); }
     if (!m) ctr.style.transform = axis.style.transform = sun.style.transform = '';
+    lw = innerWidth; lh = secs[0].offsetHeight;
     const w = stage.clientWidth, h = stage.clientHeight;
     const W = m ? Math.min(h * .46, w * .4, 300) : Math.min(300, h * .28);
     R = m ? W * .95 : Math.min(w * .35, 420); G = m ? h * .22 : W * 1.3; far = m ? .9 : 1.15; slope = m ? 1.4 : 2.5; side = m ? -1 : 1; oy = m ? h * .05 : 0; sx = w * .12;
@@ -342,7 +349,8 @@ h1,h2{font-weight:900;font-size:clamp(44px,min(5.6vw,11.5vh),98px);line-height:.
     draw(); };
 
   addEventListener('scroll', queue, { passive: true });
-  addEventListener('resize', dims);
+  /* Sur téléphone, la barre du navigateur qui se replie change la hauteur de la fenêtre mais pas la mise en page : ne rien recalculer */
+  addEventListener('resize', () => { if (fx && innerWidth === lw && secs[0].offsetHeight === lh) return; dims(); });
   d.fonts && d.fonts.ready.then(dims);
 
   /* Liens internes : même défilement doux partout, sans recharger ni empiler l'historique */
